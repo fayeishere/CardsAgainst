@@ -17,7 +17,7 @@
 # end
 #!/usr/bin/ruby
 
-
+require 'debugger'
 require 'sqlite3'
 
 
@@ -38,12 +38,12 @@ end
 
 class WhiteCard
 #initialize passes input text
-  def initialize(text)
-    @text = text
-  end
-  def to_s
-    return @text
-  end
+def initialize(text)
+  @text = text
+end
+def to_s
+  return @text
+end
 end
 
 class BlackCard
@@ -67,7 +67,7 @@ b1 = BlackCard.new("I'm a funny black card ", 1)
 # b2 = BlackCard.new("b2", 1)
 # array to hold entries
 entry = Array.new()
-# new objects entries in variables entries
+# new objects entries in entry array
 entry[0] = Entry.new(b1, w1)
 entry[1] = Entry.new(b1, w2)
 entry[2] = Entry.new(b1, w3)
@@ -75,54 +75,51 @@ entry[3] = Entry.new(b1, w4)
 white = [w1, w2, w3, w4]
 black = [b1]
 # out to user
-puts entry[0], entry[1]
-puts "Which is funnier?"
-# get users choice
-choice = gets.chomp
-# create an array to hold stats for choice
-nums = [choice]
-  puts nums[0]
-  puts nums[1]
-  puts nums[2]
+# puts entry[0], entry[1]
+# puts "Which is funnier?"
+# # get users choice
+# choice = gets.chomp
+# # create an array to hold stats for choice
+# nums = [choice]
+  # puts nums[0]
+  # puts nums[1]
+  # puts nums[2]
 
 #loop until we run out of white cards
-i = 2
-until i == white.length do
+i = 0
+counts=[]
+
+until i == white.length+1 do
   puts entry[i], entry[i+1]
   puts "Which is funnier?"
   choice = gets.chomp
+  nums = [choice]
   nums.push(choice)
-  puts nums[0]
-  puts nums[1]
-  puts nums[2]
+
+  # puts nums[0]
+  # puts nums[1]
+  # puts nums[2]
   # Records choice in database
-    db = SQLite3::Database.open "test.db"
-    db.execute "CREATE TABLE IF NOT EXISTS Cards(choice TEXT)"
-    db.execute( "INSERT INTO Cards VALUES ( ? )", *choice )
+  db = SQLite3::Database.open "test.db"
+  db.execute "CREATE TABLE IF NOT EXISTS Cards(choice TEXT)"
+  db.execute( "INSERT INTO Cards VALUES ( ? )", *choice )
+  #sameas - db.execute( "INSERT INTO Cards VALUES (" + choice + ")" )
+
+  stm = db.prepare "SELECT * FROM Cards"
+  rs = stm.execute
+  debugger
+  # Pull from database into array
+  rs.each do |row|
+    counts << row
+  end
+
+  # Take array and count how many ratings each entry has
+  rating = counts.group_by{|i| i}.map{|k,v| [k, v.count] }
+  puts rating
   i += 1
 end
-# Pull from database into array
-
-# when we have array from database - add votes
-@counts = nums.group_by{|i| i}.map{|k,v| [k, v.count] }
-
-puts @counts
 
 
-# begin
-#     db = SQLite3::Database.open "test.db"
-#     db.execute "CREATE TABLE IF NOT EXISTS Cards(Id INTEGER,
-#         Nums TEXT)"
-#   db.execute "INSERT INTO Cards VALUES(choice)"
-#     # db.execute "INSERT INTO Cards VALUES(1, 'nums')"
 
 
-# rescue SQLite3::Exception => e
-
-#     puts "Exception occured"
-#     puts e
-
-# ensure
-#     db.close if db
-# end
 
